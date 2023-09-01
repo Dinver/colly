@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/saintfish/chardet"
 	"golang.org/x/net/html/charset"
 )
@@ -84,6 +85,16 @@ func (r *Response) fixCharset(detectCharset bool, defaultEncoding string) error 
 		return nil
 	}
 
+	if !strings.Contains(contentType, "charset") && strings.Contains(contentType, "text/html") {
+		if !detectCharset {
+			return nil
+		}
+		contentTypeBody := checkContentTypeInBody(string(r.Body))
+		if contentTypeBody != "" {
+			contentType = contentTypeBody
+		}
+	}
+
 	if !strings.Contains(contentType, "charset") {
 		if !detectCharset {
 			return nil
@@ -112,4 +123,18 @@ func encodeBytes(b []byte, contentType string) ([]byte, error) {
 		return nil, err
 	}
 	return ioutil.ReadAll(r)
+}
+
+func checkContentTypeInBody(b string) string {
+	reader := strings.NewReader(b)
+	doc, err := goquery.NewDocumentFromReader(reader)
+	if err != nil {
+		fmt.Println(err)
+	}
+	metaContent, exists := doc.Find("meta[http-equiv='Content-Type']").Attr("content")
+	if exists {
+		return metaContent
+	} else {
+		return ""
+	}
 }
