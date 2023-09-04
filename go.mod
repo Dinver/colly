@@ -1,4 +1,4 @@
-module github.com/gocolly/colly/v2
+module github.com/dinver/colly/v2
 
 go 1.12
 
@@ -13,6 +13,7 @@ require (
 	github.com/kennygrant/sanitize v1.2.4
 	github.com/nlnwa/whatwg-url v0.1.2
 	github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca
+	github.com/stretchr/testify v1.8.1 // indirect
 	github.com/temoto/robotstxt v1.1.1
 	golang.org/x/net v0.7.0
 	google.golang.org/appengine v1.6.6
