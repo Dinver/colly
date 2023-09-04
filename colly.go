@@ -533,6 +533,11 @@ func (c *Collector) HasVisited(URL string) (bool, error) {
 	return c.checkHasVisited(URL, nil)
 }
 
+// ClearVisited clear cache URLs with siteID
+func (c *Collector) ClearVisited(siteID int) error {
+	return c.store.ClearVisited(siteID)
+}
+
 // HasPosted checks if the provided URL and requestData has been visited
 // This method is useful more likely to prevent re-visit same URL and POST body
 func (c *Collector) HasPosted(URL string, requestData map[string]string) (bool, error) {
