@@ -101,6 +101,8 @@ type Collector struct {
 	ParseHTTPErrorResponse bool
 	// ID is the unique identifier of a collector
 	ID uint32
+	// Site ID is the unique identifier site at DB API
+	SiteID int
 	// DetectCharset can enable character encoding detection for non-utf8 response bodies
 	// without explicit charset declaration. This feature uses https://github.com/saintfish/chardet
 	DetectCharset bool
@@ -428,6 +430,13 @@ func ID(id uint32) CollectorOption {
 	}
 }
 
+// Site ID is the unique identifier site at DB API.
+func SiteID(id int) CollectorOption {
+	return func(c *Collector) {
+		c.SiteID = id
+	}
+}
+
 // Async turns on asynchronous network requests.
 func Async(a ...bool) CollectorOption {
 	return func(c *Collector) {
@@ -481,6 +490,7 @@ func (c *Collector) Init() {
 	c.robotsMap = make(map[string]*robotstxt.RobotsData)
 	c.IgnoreRobotsTxt = true
 	c.ID = atomic.AddUint32(&collectorCounter, 1)
+	c.SiteID = 0
 	c.TraceHTTP = false
 	c.Context = context.Background()
 }
@@ -766,7 +776,7 @@ func (c *Collector) requestCheck(parsedURL *url.URL, method string, getBody func
 			}
 			defer body.Close()
 		}
-		uHash := requestHash(u, body)
+		uHash := requestHash(c, u, body)
 		visited, err := c.store.IsVisited(uHash)
 		if err != nil {
 			return err
@@ -1349,7 +1359,7 @@ func (c *Collector) checkRedirectFunc() func(req *http.Request, via []*http.Requ
 				}
 				defer body.Close()
 			}
-			uHash := requestHash(req.URL.String(), body)
+			uHash := requestHash(c, req.URL.String(), body)
 			visited, err := c.store.IsVisited(uHash)
 			if err != nil {
 				return err
@@ -1398,7 +1408,7 @@ func (c *Collector) parseSettingsFromEnv() {
 }
 
 func (c *Collector) checkHasVisited(URL string, requestData map[string]string) (bool, error) {
-	hash := requestHash(URL, createFormReader(requestData))
+	hash := requestHash(c, URL, createFormReader(requestData))
 	return c.store.IsVisited(hash)
 }
 
@@ -1519,7 +1529,7 @@ func normalizeURL(u string) string {
 	return parsed.String()
 }
 
-func requestHash(url string, body io.Reader) uint64 {
+func requestHash(c *Collector, url string, body io.Reader) string {
 	h := fnv.New64a()
 	// reparse the url to fix ambiguities such as
 	// "http://example.com" vs "http://example.com/"
@@ -1527,5 +1537,6 @@ func requestHash(url string, body io.Reader) uint64 {
 	if body != nil {
 		io.Copy(h, body)
 	}
-	return h.Sum64()
+	hash := strconv.FormatUint(h.Sum64(), 10)
+	return strconv.Itoa(c.SiteID) + "--" + hash
 }

@@ -31,10 +31,12 @@ type Storage interface {
 	// Init initializes the storage
 	Init() error
 	// Visited receives and stores a request ID that is visited by the Collector
-	Visited(requestID uint64) error
+	Visited(requestID string) error
 	// IsVisited returns true if the request was visited before IsVisited
 	// is called
-	IsVisited(requestID uint64) (bool, error)
+	IsVisited(requestID string) (bool, error)
+	// Clear visited for site id
+	ClearVisited(siteID int) error
 	// Cookies retrieves stored cookies for a given host
 	Cookies(u *url.URL) string
 	// SetCookies stores cookies for a given host
@@ -45,7 +47,7 @@ type Storage interface {
 // InMemoryStorage keeps cookies and visited urls in memory
 // without persisting data on the disk.
 type InMemoryStorage struct {
-	visitedURLs map[uint64]bool
+	visitedURLs map[string]bool
 	lock        *sync.RWMutex
 	jar         *cookiejar.Jar
 }
@@ -53,7 +55,7 @@ type InMemoryStorage struct {
 // Init initializes InMemoryStorage
 func (s *InMemoryStorage) Init() error {
 	if s.visitedURLs == nil {
-		s.visitedURLs = make(map[uint64]bool)
+		s.visitedURLs = make(map[string]bool)
 	}
 	if s.lock == nil {
 		s.lock = &sync.RWMutex{}
@@ -67,7 +69,7 @@ func (s *InMemoryStorage) Init() error {
 }
 
 // Visited implements Storage.Visited()
-func (s *InMemoryStorage) Visited(requestID uint64) error {
+func (s *InMemoryStorage) Visited(requestID string) error {
 	s.lock.Lock()
 	s.visitedURLs[requestID] = true
 	s.lock.Unlock()
@@ -75,11 +77,16 @@ func (s *InMemoryStorage) Visited(requestID uint64) error {
 }
 
 // IsVisited implements Storage.IsVisited()
-func (s *InMemoryStorage) IsVisited(requestID uint64) (bool, error) {
+func (s *InMemoryStorage) IsVisited(requestID string) (bool, error) {
 	s.lock.RLock()
 	visited := s.visitedURLs[requestID]
 	s.lock.RUnlock()
 	return visited, nil
+}
+
+// Clear visited for site id
+func (s *InMemoryStorage) ClearVisited(siteID int) error {
+	return nil
 }
 
 // Cookies implements Storage.Cookies()
