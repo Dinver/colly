@@ -759,19 +759,12 @@ func (c *Collector) requestCheck(parsedURL *url.URL, method string, getBody func
 	if err := c.checkFilters(u, parsedURL.Hostname()); err != nil {
 		return err
 	}
-	if method != "HEAD" && !c.IgnoreRobotsTxt {
+	if !c.IgnoreRobotsTxt {
 		if err := c.checkRobots(parsedURL); err != nil {
 			return err
 		}
 	}
 	if checkRevisit && !c.AllowURLRevisit {
-		// TODO weird behaviour, it allows CheckHead to work correctly,
-		// but it should probably better be solved with
-		// "check-but-not-save" flag or something
-		if method != "GET" && getBody == nil {
-			return nil
-		}
-
 		var body io.ReadCloser
 		if getBody != nil {
 			var err error
