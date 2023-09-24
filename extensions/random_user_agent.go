@@ -23,6 +23,16 @@ var uaGensMobile = []func() string{
 	genMobileNexus10UA,
 }
 
+// RandomUserAgent generates a random DESKTOP browser user-agent string
+func GetRandomUserAgent() string {
+	return uaGens[rand.Intn(len(uaGens))]()
+}
+
+// RandomMobileUserAgent generates a random MOBILE browser user-agent string
+func GetRandomMobileUserAgent() string {
+	return uaGensMobile[rand.Intn(len(uaGensMobile))]()
+}
+
 // RandomUserAgent generates a random DESKTOP browser user-agent on every requests
 func RandomUserAgent(c *colly.Collector) {
 	c.OnRequest(func(r *colly.Request) {
