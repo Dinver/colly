@@ -774,7 +774,7 @@ func (c *Collector) requestCheck(parsedURL *url.URL, method string, getBody func
 			}
 			defer body.Close()
 		}
-		uHash := requestHash(c, u, body)
+		uHash := requestHash(c, u, body, nil)
 		visited, err := c.store.IsVisited(uHash)
 		if err != nil {
 			return err
@@ -1357,7 +1357,7 @@ func (c *Collector) checkRedirectFunc() func(req *http.Request, via []*http.Requ
 				}
 				defer body.Close()
 			}
-			uHash := requestHash(c, req.URL.String(), body)
+			uHash := requestHash(c, req.URL.String(), body, nil)
 			visited, err := c.store.IsVisited(uHash)
 			if err != nil {
 				return err
@@ -1406,7 +1406,7 @@ func (c *Collector) parseSettingsFromEnv() {
 }
 
 func (c *Collector) checkHasVisited(URL string, requestData map[string]string) (bool, error) {
-	hash := requestHash(c, URL, createFormReader(requestData))
+	hash := requestHash(c, URL, createFormReader(requestData), nil)
 	return c.store.IsVisited(hash)
 }
 
@@ -1527,7 +1527,11 @@ func normalizeURL(u string) string {
 	return parsed.String()
 }
 
-func requestHash(c *Collector, url string, body io.Reader) string {
+func requestHash(c *Collector, url string, body io.Reader, siteID *int) string {
+	if siteID == nil {
+		siteID = &c.SiteID
+	}
+	var siteIDPtr *int = siteID
 	h := fnv.New64a()
 	// reparse the url to fix ambiguities such as
 	// "http://example.com" vs "http://example.com/"
@@ -1536,5 +1540,5 @@ func requestHash(c *Collector, url string, body io.Reader) string {
 		io.Copy(h, body)
 	}
 	hash := strconv.FormatUint(h.Sum64(), 10)
-	return strconv.Itoa(c.SiteID) + "--" + hash
+	return strconv.Itoa(*siteIDPtr) + "--" + hash
 }
