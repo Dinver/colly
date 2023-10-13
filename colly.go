@@ -555,6 +555,12 @@ func (c *Collector) HasVisited(URL string) (bool, error) {
 	return c.checkHasVisited(URL, nil)
 }
 
+// HasVisitedWithSite checks if the provided URL with site ID has been visited
+func (c *Collector) HasVisitedWithSite(URL string, SiteID int) (bool, error) {
+	hash := requestHash(c, URL, createFormReader(nil), &SiteID)
+	return c.store.IsVisited(hash)
+}
+
 // ClearVisited clear cache URLs with siteID
 func (c *Collector) ClearVisited(siteID int) error {
 	return c.store.ClearVisited(siteID)
