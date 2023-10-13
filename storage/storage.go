@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -86,6 +87,16 @@ func (s *InMemoryStorage) IsVisited(requestID string) (bool, error) {
 
 // Clear visited for site id
 func (s *InMemoryStorage) ClearVisited(siteID int) error {
+	target := strconv.Itoa(siteID) + "--"
+	s.lock.Lock()         // Lock the storage to prevent concurrent access
+	defer s.lock.Unlock() // Unlock the storage when done
+
+	for key := range s.visitedURLs {
+		if strings.HasPrefix(key, target) {
+			delete(s.visitedURLs, key)
+		}
+	}
+
 	return nil
 }
 
