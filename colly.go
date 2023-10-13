@@ -528,6 +528,28 @@ func (c *Collector) Visit(URL string) error {
 	return c.scrape(URL, "GET", 1, nil, nil, nil, true)
 }
 
+// SetVisited provided URL has been visited
+func (c *Collector) SetVisit(URL string, SiteID int) error {
+	parsedWhatwgURL, err := urlParser.Parse(URL)
+	if err != nil {
+		return err
+	}
+	parsedURL, err := url.Parse(parsedWhatwgURL.Href(false))
+	if err != nil {
+		return err
+	}
+	u := parsedURL.String()
+	uHash := requestHash(c, u, nil, &SiteID)
+	visited, err := c.store.IsVisited(uHash)
+	if err != nil {
+		return err
+	}
+	if visited {
+		return &AlreadyVisitedError{parsedURL}
+	}
+	return c.store.Visited(uHash)
+}
+
 // HasVisited checks if the provided URL has been visited
 func (c *Collector) HasVisited(URL string) (bool, error) {
 	return c.checkHasVisited(URL, nil)
